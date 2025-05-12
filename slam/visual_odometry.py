@@ -178,7 +178,7 @@ class VisualOdometryEducational(VisualOdometryBase):
         # draw image         
         self.draw_img = self.drawFeatureTracks(self.cur_image) 
         # check if we have enough features to track otherwise detect new ones and start tracking from them (used for LK tracker) 
-        if (self.feature_tracker.tracker_type == FeatureTrackerTypes.LK) and (self.kps_ref.shape[0] < self.feature_tracker.num_features): 
+        if (self.feature_tracker.tracker_type == FeatureTrackerTypes.LK) and (self.kps_cur.shape[0] < self.feature_tracker.num_features):
             self.kps_cur, self.des_cur = self.feature_tracker.detectAndCompute(self.cur_image)           
             self.kps_cur = np.array([x.pt for x in self.kps_cur], dtype=np.float32) # convert from list of keypoints to an array of points   
             if kVerbose:     
