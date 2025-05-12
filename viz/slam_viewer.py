@@ -1,9 +1,9 @@
 import rerun as rr
 import rerun.blueprint as rrb
 import cv2
+import numpy as np
 
-
-class RerunLogger:
+class SlamViewer:
     def __init__(self):
         self._init_rerun()
 
@@ -11,17 +11,18 @@ class RerunLogger:
     def _init_rerun():
         # predefine window layout
         blueprint = rrb.Horizontal(
-            rrb.Spatial3DView(name="Scene", origin="/world")
+            rrb.Spatial3DView(name="Scene", origin="/world"),
+            rrb.Spatial2DView(name="Camera", origin="/world/camera"),
         )
 
         # spawn window with predefined layout
-        rr.init("Visual Odometry", spawn=True, default_blueprint=blueprint)
+        rr.init("Slam Viewer", spawn=True, default_blueprint=blueprint)
 
         # set axis directions
         rr.log("world", rr.ViewCoordinates.RDF, static=True)  # X=Right, Y=Down, Z=Forward
 
-        RerunLogger._draw_3d_grid_plane()
-        RerunLogger._draw_axes()
+        SlamViewer._draw_3d_grid_plane()
+        SlamViewer._draw_axes()
 
     @staticmethod
     def _draw_3d_grid_plane(num_divs=30, div_size=10):
@@ -49,19 +50,34 @@ class RerunLogger:
             static=True,
         )
 
-    def log_camera_pose(self, frame_id: int, img, camera, camera_pose) -> None:
+    def set_camera_config(self, camera):
+        rr.log("world/camera", rr.Pinhole(
+            resolution=[camera.width, camera.height],
+            focal_length=[camera.fx, camera.fy],
+            principal_point=[camera.cx, camera.cy],), static=True)
+
+    def log_camera_frame(self, frame_id: int, frame) -> None:
+        rr.set_time("frame_id", duration=frame_id)
+
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        rr.log("world/camera", rr.Image(rgb))
+
+    def log_camera_pose(self, frame_id: int, camera_pose) -> None:
         rr.set_time("frame_id", duration=frame_id)
 
         R = camera_pose[:3, :3]
         t = camera_pose[:3, 3]
-        rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
         rr.log("world/camera", rr.Transform3D(translation=t, mat3x3=R, from_parent=False))
-        rr.log("world/camera",
-               rr.Pinhole(
-                   resolution=[camera.width, camera.height],
-                   focal_length=[camera.fx, camera.fy],
-                   principal_point=[camera.cx, camera.cy],
-                   # image_plane_distance=20,
-               ), )
-        rr.log("world/camera", rr.Image(rgb))
+
+    def log_camera_trajectory_estimated(self, frame_id: int, points) -> None:
+        rr.set_time("frame_id", duration=frame_id)
+
+        points = np.array(points).reshape(-1, 3)
+        rr.log("world/camera_trajectory_estimated", rr.LineStrips3D([points], radii=0.1, colors=[255, 0, 0]))
+
+    def log_camera_trajectory_reference(self, frame_id: int, points) -> None:
+        rr.set_time("frame_id", duration=frame_id)
+
+        points = np.array(points).reshape(-1, 3)
+        rr.log("world/camera_trajectory_reference", rr.LineStrips3D([points], radii=0.1, colors=[0, 255, 0]))
+
