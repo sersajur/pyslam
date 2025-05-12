@@ -2,6 +2,8 @@ import rerun as rr
 import rerun.blueprint as rrb
 import cv2
 import numpy as np
+from numpy import unsignedinteger
+
 
 class SlamViewer:
     def __init__(self):
@@ -10,19 +12,36 @@ class SlamViewer:
     @staticmethod
     def _init_rerun():
         # predefine window layout
-        blueprint = rrb.Horizontal(
-            rrb.Spatial3DView(name="Scene", origin="/world"),
-            rrb.Spatial2DView(name="Camera", origin="/world/camera"),
+        blueprint = rrb.Vertical(
+            rrb.Horizontal(
+                rrb.Spatial3DView(name="Scene", origin="/world"),
+                rrb.Spatial2DView(name="Camera", origin="/world/camera"),
+            ),
+            rrb.Horizontal(
+                rrb.TimeSeriesView(name="Trajectory Error", origin="/statistics/trajectory_error"),
+                rrb.TimeSeriesView(name="Key Points", origin="/statistics/frame_key_points"),
+            )
         )
 
         # spawn window with predefined layout
         rr.init("Slam Viewer", spawn=True, default_blueprint=blueprint)
 
-        # set axis directions
+        # set axis directions, draw axes and XZ grid
         rr.log("world", rr.ViewCoordinates.RDF, static=True)  # X=Right, Y=Down, Z=Forward
-
         SlamViewer._draw_3d_grid_plane()
         SlamViewer._draw_axes()
+
+        # configure statistics plots
+        # - Trajectory Error
+        rr.log("statistics/trajectory_error/distance", rr.SeriesLines(colors=[255, 255, 255], widths=2), static=True)
+        rr.log("statistics/trajectory_error/abs_x", rr.SeriesLines(colors=[255, 0, 0], widths=1), static=True)
+        rr.log("statistics/trajectory_error/abs_y", rr.SeriesLines(colors=[0, 255, 0], widths=1), static=True)
+        rr.log("statistics/trajectory_error/abs_z", rr.SeriesLines(colors=[0, 0, 255], widths=1), static=True)
+        # - Key Points Number
+        rr.log("statistics/frame_key_points/reference", rr.SeriesLines(colors=[255, 255, 255], widths=2), static=True)
+        rr.log("statistics/frame_key_points/optically_matched", rr.SeriesLines(colors=[0, 255, 255], widths=1), static=True)
+        rr.log("statistics/frame_key_points/geometrically_matched", rr.SeriesLines(colors=[0, 255, 0], widths=1), static=True)
+
 
     @staticmethod
     def _draw_3d_grid_plane(num_divs=30, div_size=10):
@@ -73,11 +92,33 @@ class SlamViewer:
         rr.set_time("frame_id", duration=frame_id)
 
         points = np.array(points).reshape(-1, 3)
-        rr.log("world/camera_trajectory_estimated", rr.LineStrips3D([points], radii=0.1, colors=[255, 0, 0]))
+        rr.log("world/camera_trajectory_estimated", rr.LineStrips3D([points], radii=0.1, colors=[200, 0, 0]))
 
     def log_camera_trajectory_reference(self, frame_id: int, points) -> None:
         rr.set_time("frame_id", duration=frame_id)
 
         points = np.array(points).reshape(-1, 3)
-        rr.log("world/camera_trajectory_reference", rr.LineStrips3D([points], radii=0.1, colors=[0, 255, 0]))
+        rr.log("world/camera_trajectory_reference", rr.LineStrips3D([points], radii=0.1, colors=[0, 200, 0]))
 
+    def log_camera_trajectory_error(self, frame_id: int, abs_xyz_error) -> None:
+        rr.set_time("frame_id", duration=frame_id)
+
+        rr.log("statistics/trajectory_error/abs_x", rr.Scalars(abs_xyz_error[0]))
+        rr.log("statistics/trajectory_error/abs_y", rr.Scalars(abs_xyz_error[1]))
+        rr.log("statistics/trajectory_error/abs_z", rr.Scalars(abs_xyz_error[2]))
+        rr.log("statistics/trajectory_error/distance", rr.Scalars(np.linalg.norm(abs_xyz_error)))
+
+    def log_camera_frame_key_points_reference(self, frame_id: int, key_points_count: unsignedinteger) -> None:
+        rr.set_time("frame_id", duration=frame_id)
+
+        rr.log("statistics/frame_key_points/reference", rr.Scalars(key_points_count))
+
+    def log_camera_frame_key_points_optically_matched(self, frame_id: int, key_points_count: unsignedinteger) -> None:
+        rr.set_time("frame_id", duration=frame_id)
+
+        rr.log("statistics/frame_key_points/optically_matched", rr.Scalars(key_points_count))
+
+    def log_camera_frame_key_points_geometrically_matched(self, frame_id: int, key_points_count: unsignedinteger) -> None:
+        rr.set_time("frame_id", duration=frame_id)
+
+        rr.log("statistics/frame_key_points/geometrically_matched", rr.Scalars(key_points_count))
