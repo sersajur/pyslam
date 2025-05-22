@@ -109,6 +109,12 @@ class SlamViewer:
         points = np.array(points).reshape(-1, 3)
         rr.log("world/camera_trajectory_reference", rr.LineStrips3D([points], radii=0.1, colors=[0, 200, 0]))
 
+    def log_map_points(self, frame_id: int, points, colors) -> None:
+        rr.set_time("frame_id", duration=frame_id)
+        points = np.array(points).reshape(-1, 3)
+        colors = np.array(colors).reshape(-1, 3)
+        rr.log("world/map_points", rr.Points3D(points, colors=colors))
+
     def log_camera_trajectory_error(self, frame_id: int, abs_xyz_error) -> None:
         rr.set_time("frame_id", duration=frame_id)
 
