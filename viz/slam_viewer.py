@@ -81,18 +81,27 @@ class SlamViewer:
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         rr.log("world/camera", rr.Image(rgb))
 
+    def log_camera_rotation_and_translation(self, frame_id: int, camera_R, camera_t) -> None:
+        rr.set_time("frame_id", duration=frame_id)
+
+        rr.log("world/camera", rr.Transform3D(translation=camera_t, mat3x3=camera_R, from_parent=False))
+
     def log_camera_pose(self, frame_id: int, camera_pose) -> None:
         rr.set_time("frame_id", duration=frame_id)
 
         R = camera_pose[:3, :3]
         t = camera_pose[:3, 3]
-        rr.log("world/camera", rr.Transform3D(translation=t, mat3x3=R, from_parent=False))
+        self.log_camera_rotation_and_translation(frame_id, R, t)
 
     def log_camera_trajectory_estimated(self, frame_id: int, points) -> None:
         rr.set_time("frame_id", duration=frame_id)
 
         points = np.array(points).reshape(-1, 3)
         rr.log("world/camera_trajectory_estimated", rr.LineStrips3D([points], radii=0.1, colors=[200, 0, 0]))
+
+    def log_camera_pose_trajectory_estimated(self, frame_id: int, poses) -> None:
+        camera_positions = poses[:, :3, 3]
+        self.log_camera_trajectory_estimated(frame_id, camera_positions)
 
     def log_camera_trajectory_reference(self, frame_id: int, points) -> None:
         rr.set_time("frame_id", duration=frame_id)
