@@ -28,8 +28,8 @@ class SlamViewer:
 
         # set axis directions, draw axes and XZ grid
         rr.log("world", rr.ViewCoordinates.RDF, static=True)  # X=Right, Y=Down, Z=Forward
-        SlamViewer._draw_3d_grid_plane()
-        SlamViewer._draw_axes()
+        # SlamViewer._draw_3d_grid_plane()
+        # SlamViewer._draw_axes()
 
         # configure statistics plots
         # - Trajectory Error
@@ -75,6 +75,9 @@ class SlamViewer:
             focal_length=[camera.fx, camera.fy],
             principal_point=[camera.cx, camera.cy],), static=True)
 
+    def set_world_scale(self, scale):
+        rr.log("world", rr.Transform3D(scale=[scale, scale, scale], from_parent=True), static=True)
+
     def log_camera_frame(self, frame_id: int, frame) -> None:
         rr.set_time("frame_id", duration=frame_id)
 
@@ -97,7 +100,7 @@ class SlamViewer:
         rr.set_time("frame_id", duration=frame_id)
 
         points = np.array(points).reshape(-1, 3)
-        rr.log("world/camera_trajectory_estimated", rr.LineStrips3D([points], radii=0.1, colors=[200, 0, 0]))
+        rr.log("world/camera_trajectory_estimated", rr.LineStrips3D([points], colors=[200, 0, 0]))
 
     def log_camera_pose_trajectory_estimated(self, frame_id: int, poses) -> None:
         camera_positions = poses[:, :3, 3]
@@ -107,13 +110,13 @@ class SlamViewer:
         rr.set_time("frame_id", duration=frame_id)
 
         points = np.array(points).reshape(-1, 3)
-        rr.log("world/camera_trajectory_reference", rr.LineStrips3D([points], radii=0.1, colors=[0, 200, 0]))
+        rr.log("world/camera_trajectory_reference", rr.LineStrips3D([points], colors=[0, 200, 0]))
 
     def log_map_points(self, frame_id: int, points, colors) -> None:
         rr.set_time("frame_id", duration=frame_id)
         points = np.array(points).reshape(-1, 3)
         colors = np.array(colors).reshape(-1, 3)
-        rr.log("world/map_points", rr.Points3D(points, colors=colors))
+        rr.log("world/map_points", rr.Points3D(points, colors=colors, radii=0.01))
 
     def log_camera_trajectory_error(self, frame_id: int, abs_xyz_error) -> None:
         rr.set_time("frame_id", duration=frame_id)
