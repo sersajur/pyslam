@@ -12,6 +12,8 @@ class SlamViewer:
     _PTH_TRAJECTORY_ESTIMATED = "/world/estimated/trajectory"
     _PTH_TRAJECTORY_REFERENCE = "/world/reference/trajectory"
     _PTH_MAP_ESTIMATED = "/world/estimated/map"
+    _PTH_MAP_ESTIMATED_VISIBLE = "/world/estimated/map/visible"
+    _PTH_MAP_ESTIMATED_POTENTIALLY_VISIBLE = "/world/estimated/map/potentially_visible"
     _PTH_CAMERA = "/world/estimated/camera"
     _PTH_CAMERA_IMAGE = "/world/estimated/camera/image"
     _PTH_STAT_TRAJECTORY_ERROR = "/statistics/trajectory_error"
@@ -23,6 +25,7 @@ class SlamViewer:
     _PTH_STAT_FRAME_KEY_POINTS_REFERENCE = "/statistics/frame_key_points/reference"
     _PTH_STAT_FRAME_KEY_POINTS_OPTICALLY_MATCHED = "/statistics/frame_key_points/optically_matched"
     _PTH_STAT_FRAME_KEY_POINTS_GEOMETRICALLY_MATCHED = "/statistics/frame_key_points/geometrically_matched"
+    _PTH_STAT_MAP_POINTS_FRAME_VISIBLE_TO_OBSERVABLE_RATIO = "/statistics/map/frame_visible_to_observable_ratio"
     def __init__(self):
         self._init_rerun()
 
@@ -56,13 +59,15 @@ class SlamViewer:
         rr.log(self._PTH_STAT_FRAME_KEY_POINTS_REFERENCE, rr.SeriesLines(colors=[255, 255, 255], widths=2), static=True)
         rr.log(self._PTH_STAT_FRAME_KEY_POINTS_OPTICALLY_MATCHED, rr.SeriesLines(colors=[0, 255, 255], widths=1), static=True)
         rr.log(self._PTH_STAT_FRAME_KEY_POINTS_GEOMETRICALLY_MATCHED, rr.SeriesLines(colors=[0, 255, 0], widths=1), static=True)
+        # - Map Points statistics
+        rr.log(self._PTH_STAT_MAP_POINTS_FRAME_VISIBLE_TO_OBSERVABLE_RATIO, rr.SeriesLines(colors=[255, 255, 255], widths=2), static=True)
 
     def set_camera_config(self, camera):
         rr.log(self._PTH_CAMERA, rr.Pinhole(
             resolution=[camera.width, camera.height],
             focal_length=[camera.fx, camera.fy],
             principal_point=[camera.cx, camera.cy],
-            image_plane_distance=1.0), static=True)
+            image_plane_distance=1), static=True)
 
     def set_world_scale(self, scale):
         rr.log(self._PTH_WORLD_ESTIMATED, rr.Transform3D(scale=[scale, scale, scale], from_parent=False, axis_length=1), static=True)
@@ -105,7 +110,24 @@ class SlamViewer:
         rr.set_time("frame_id", duration=frame_id)
         points = np.array(points).reshape(-1, 3)
         colors = np.array(colors).reshape(-1, 3)
-        rr.log(self._PTH_MAP_ESTIMATED, rr.Points3D(points, colors=colors, radii=0.01))
+        rr.log(self._PTH_MAP_ESTIMATED, rr.Points3D(points, colors=colors, radii=0.05))
+
+    def log_map_points_currently_visible(self, frame_id: int, points) -> None:
+        rr.set_time("frame_id", duration=frame_id)
+        points = np.array(points).reshape(-1, 3)
+
+        rr.log(self._PTH_MAP_ESTIMATED_VISIBLE, rr.Points3D(points, colors=[0, 255, 0], radii=0.05))
+
+    def log_map_points_can_be_currently_visible(self, frame_id: int, points) -> None:
+        rr.set_time("frame_id", duration=frame_id)
+        points = np.array(points).reshape(-1, 3)
+
+        rr.log(self._PTH_MAP_ESTIMATED_POTENTIALLY_VISIBLE, rr.Points3D(points, colors=[0, 0, 255], radii=0.05))
+
+    def log_stat_map_points_visible_to_observable_ratio(self, frame_id: int, ratio) -> None:
+        rr.set_time("frame_id", duration=frame_id)
+
+        rr.log(self._PTH_STAT_MAP_POINTS_FRAME_VISIBLE_TO_OBSERVABLE_RATIO, rr.Scalars(ratio))
 
     def log_camera_trajectory_error(self, frame_id: int, abs_xyz_error) -> None:
         rr.set_time("frame_id", duration=frame_id)
