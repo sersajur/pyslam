@@ -67,7 +67,7 @@ class SlamViewer:
             resolution=[camera.width, camera.height],
             focal_length=[camera.fx, camera.fy],
             principal_point=[camera.cx, camera.cy],
-            image_plane_distance=1), static=True)
+            image_plane_distance=0.1), static=True)
 
     def set_world_scale(self, scale):
         rr.log(self._PTH_WORLD_ESTIMATED, rr.Transform3D(scale=[scale, scale, scale], from_parent=False, axis_length=1), static=True)
@@ -110,19 +110,19 @@ class SlamViewer:
         rr.set_time("frame_id", duration=frame_id)
         points = np.array(points).reshape(-1, 3)
         colors = np.array(colors).reshape(-1, 3)
-        rr.log(self._PTH_MAP_ESTIMATED, rr.Points3D(points, colors=colors, radii=0.05))
+        rr.log(self._PTH_MAP_ESTIMATED, rr.Points3D(points, colors=colors, radii=0.01))
 
     def log_map_points_currently_visible(self, frame_id: int, points) -> None:
         rr.set_time("frame_id", duration=frame_id)
         points = np.array(points).reshape(-1, 3)
 
-        rr.log(self._PTH_MAP_ESTIMATED_VISIBLE, rr.Points3D(points, colors=[0, 255, 0], radii=0.05))
+        rr.log(self._PTH_MAP_ESTIMATED_VISIBLE, rr.Points3D(points, colors=[0, 255, 0], radii=0.01))
 
     def log_map_points_can_be_currently_visible(self, frame_id: int, points) -> None:
         rr.set_time("frame_id", duration=frame_id)
         points = np.array(points).reshape(-1, 3)
 
-        rr.log(self._PTH_MAP_ESTIMATED_POTENTIALLY_VISIBLE, rr.Points3D(points, colors=[0, 0, 255], radii=0.05))
+        rr.log(self._PTH_MAP_ESTIMATED_POTENTIALLY_VISIBLE, rr.Points3D(points, colors=[0, 0, 255], radii=0.01))
 
     def log_stat_map_points_visible_to_observable_ratio(self, frame_id: int, ratio) -> None:
         rr.set_time("frame_id", duration=frame_id)
