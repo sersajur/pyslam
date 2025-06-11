@@ -77,7 +77,7 @@ PRIVATE
     ${OpenCV_LIBS}
     ${IBOW_LCD_LIBS}
     ${Boost_LIBRARIES}
-    ${PYTHON_LIBRARIES} Python3::NumPy
+    Python3::NumPy
 )
 target_compile_definitions(pyibow 
 PRIVATE 
@@ -94,7 +94,7 @@ PRIVATE
     ${OpenCV_LIBS}
     ${IBOW_LCD_LIBS}
     ${Boost_LIBRARIES}    
-    ${PYTHON_LIBRARIES} Python3::NumPy
+    Python3::NumPy
 )
 target_compile_definitions(pyobindex2 
 PRIVATE 
