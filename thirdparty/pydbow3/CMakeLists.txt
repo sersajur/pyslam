@@ -69,7 +69,7 @@ PRIVATE
     ${OpenCV_LIBS}
     ${Boost_LIBRARIES}
     ${DBoW3_LIBS}
-    ${PYTHON_LIBRARIES} Python3::NumPy
+    Python3::NumPy
 )
 
 target_compile_definitions(pydbow3 

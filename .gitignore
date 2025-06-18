@@ -8,6 +8,8 @@ __pycache__
 .vscode 
 !.vscode/settings.json
 
+.idea
+
 tmp
 build
 debug.txt
